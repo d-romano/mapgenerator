@@ -30,7 +30,7 @@ To generate the terrain there are 2 algorithms implemented that will generate he
 1. [Diamond-Square algorithm](https://en.wikipedia.org/wiki/Diamond-square_algorithm)
 	![dsheatmap](https://github.com/d-romano/mapgenerator/raw/master/Images/dsheatmap.png)
 2. Perlin Noise adapted from [Ken Perlin's java reference](https://mrl.cs.nyu.edu/~perlin/noise/)
-	![pnheatmap](https://user-images.githubusercontent.com/65517702/98038575-32598f80-1dd2-11eb-825f-3c695c215a10.png)
+	![pnheatmap](https://github.com/d-romano/mapgenerator/raw/master/Images/dsheatmap.png)
 
 Both were implemented using NumPy for faster, more compact arrays as well as its C-like data types. 
 
