@@ -28,9 +28,12 @@ There are three main components to this project.
 To generate the terrain there are 2 algorithms implemented that will generate height maps.
 
 1. [Diamond-Square algorithm](https://en.wikipedia.org/wiki/Diamond-square_algorithm)
-	![dsheatmap](https://github.com/d-romano/mapgenerator/raw/master/Images/dsheatmap.png)
+	
+    ![dsheatmap](https://github.com/d-romano/mapgenerator/raw/master/Images/dsheatmap.png)
+
 2. Perlin Noise adapted from [Ken Perlin's java reference](https://mrl.cs.nyu.edu/~perlin/noise/)
-	![pnheatmap](https://github.com/d-romano/mapgenerator/raw/master/Images/dsheatmap.png)
+
+    ![pnheatmap](https://github.com/d-romano/mapgenerator/raw/master/Images/pnheatmap.png)
 
 Both were implemented using NumPy for faster, more compact arrays as well as its C-like data types. 
 
