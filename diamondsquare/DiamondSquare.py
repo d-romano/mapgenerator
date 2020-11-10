@@ -2,109 +2,145 @@ import random
 import numpy as np 
 
 
-"""
-	TODO:
 
-	 - Change how to roughness scale affects the peaks and valleys of the generation.
-	 - Change randomization tool to better allow users to remake maps based on seed.
-	 - Attempt optimization. Currently application does not allow for an image larger than 2**15
-"""
-
-
-class DiamondSquare:
-	def __init__(self, scale = 2, roughness = 1.0, seed=None):
-		self.size = (2**scale)+1
-		self.grid = None
-		# Used to seed random to replicate results
-		self.seed = seed
-		# Help modify the scale for random int added to values
-		self.rough = roughness
+def DiamondSquare(scale:int, rough:float = 1.0, seed:int = None,  redNoise: bool = False):
+	"""
+	Generate a 2**n+1 x  2**n+1 image. Only has memory capacity to perform 
+	(2**12+1)**2 images, albeit it slowly due to O(2^n) run time. Utilizes 32-bit 
+	float values to minimize the amount of memory used (due to pythons datatype overhead).
 
 
-	def initGrid(self):
-		''' initialize grid with zero then add seed values ''' 
-		# Remove later
-		# 57 16 31 26
-		random.seed(12345)
-		self.grid = np.zeros((self.size, self.size), dtype=np.float32)
-		# Seed initial corners with random values
-		self.grid[0,0] = random.uniform(-self.rough,self.rough)
-		self.grid[0,self.size-1] = random.uniform(-self.rough,self.rough)
-		self.grid[self.size-1,0] = random.uniform(-self.rough,self.rough)
-		self.grid[self.size-1,self.size-1] = random.uniform(-self.rough,self.rough)
+	fillGrid(self) - Iniitializes the (2**n)**2 grid with all 0's and seeds the corner values
+	with a python psuedo-random value between (-roughness, roughness) then runs DS algo to fill.
 
-	def fillGrid(self):
-		side = self.size -1
+	squareStep(self, size, side, addVal) - Finds the center point of the current square being worked on
+	and calcuates the center point based on the average of the four corner values + addVal.
 
-		addVal = 0
-		lvl = 1
-		while side >= 2:
-			addVal = addVal / lvl+1
-			self.squareStep(self.size, side, addVal)
-			self.diamondStep(self.size, side, addVal)
+	diamondStep(self, side, size, addVal) - Finds the four pixels in the cardinal directions of the square
+	by getting the average of the ordinal directions of the square + addVal.
 
-			# Shrink both random value and side len
-			side = side // 2
-			
-			lvl+=1
+	medianFilter(filterSize) - Attempts to smooth the noise in a height map by replacing a pixel value in the center
+	with the median of all its pixels in the area of filterSize x filterSize.
 
-	def getGrid(self):
-		''' Return the value of the grid. '''
-		return self.grid
+	"""
+	size = 2**scale + 1
 
+	# If seed entered then add to random, else clear seed 
+	if seed:
+		random.seed(seed)
+	else:
+		random.seed()
 
-	def mapGenerated(self):
-		'''
-			Checks if map has been generated. Generated map will not 
-			have a 0 value.
-		'''
-		return self.grid[0,0]
+	# Remove later
+	# 57 16 31 26
+	grid = fillGrid(size, rough)
+
+	if redNoise:
+		grid = medianFilter(grid, size, 3)
+
+	return grid
 
 
-	def squareStep(self, size, side, addVal):
-		''' Find the center of each square and generate value.'''
-		half = side // 2
-		for r in range(0, size-1, side):
-			for c in range(0, size-1, side):
-				tl = self.grid[r,c]			# Top-left value.
-				tr = self.grid[r,c+side]		# Top-right value.
-				bl = self.grid[r+side,c]		# Bottom-left value.
-				br = self.grid[r+side,c+side]	# Bottom-right value.
+def fillGrid(size, rough):
+	grid = np.zeros((size, size), dtype=np.float32)
 
-				avg = ((tl + tr + bl + br) / 4) 
+	#  Holds base height for seeding
+	baseHeight = .5
+	# Seed initial corners with random values
+	grid[0, 0] = random.uniform(-baseHeight, baseHeight)
+	grid[0, size-1] = random.uniform(-baseHeight, baseHeight)
+	grid[size-1, 0] = random.uniform(-baseHeight, baseHeight)
+	grid[size-1, size-1] = random.uniform(-baseHeight, baseHeight)
 
-				# Set the center of the current square to the average + random value
-				self.grid[r+half,c+half] = avg + random.uniform(-addVal, addVal)
+	# Initialize the length of each side.
+	side = size -1
+	# Create range of additonal random value from roughness.
+	addVal = rough
+	while side >= 2:
+		
+		grid = squareStep(grid, size, side, addVal)
+		grid = diamondStep(grid, size, side, addVal)
+		# Shrink both random value and side len
+		side = side // 2
+		# Keeps a little residual noise
+		addVal = max(addVal / 2, .01)
+
+	return grid
 
 
-	def diamondStep(self, size, side, addVal):
-		''' Find the center points of the squares and generate value.'''
+def squareStep(grid, size, side, addVal):
+	''' Find the center of each square and generate value.'''
+	half = side // 2
+	for r in range(0, size-1, side):
+		for c in range(0, size-1, side):
+			tl = grid[r,c]			# Top-left value.
+			tr = grid[r,c+side]		# Top-right value.
+			bl = grid[r+side,c]		# Bottom-left value.
+			br = grid[r+side,c+side]	# Bottom-right value.
 
-		half = side // 2
-		for r in range(0, size, half):
-			for c in range((r + half)%side, size, side):
-				# Handle Wrap around cases for Y axis
-				if r == 0:						# Handle Top value.
-					t = self.grid[(size-1)-half,c]
-				else:
-					t = self.grid[r-half,c] 	
+			avg = ((tl + tr + bl + br) / 4) 
 
-				if r == size-1:					# Handle Bottom value.
-					b = self.grid[0+half, c] 	
-				else:	
-					b = self.grid[(r+half)%size,c] 	
+			# Set the center of the current square to the average + random value
+			grid[r+half,c+half] = avg + random.uniform(-addVal, addVal)
 
-				# Handle Wrap around cases for X axis.
-				if c == 0:						# Handle Left value.	
-					l = self.grid[r,(size-1)-half]
-				else:
-					l = self.grid[r,c-half]	
-				if c == size-1:					# Handle Right value.
-					ri = self.grid[r,0+half]	
-				else:	
-					ri = self.grid[r,(c+half)%size]	
+	return grid
 
-				avg = ((t + l + b + ri) / 4)
-				
-				# Set current diamond point to grid
-				self.grid[r,c] = avg + random.uniform(-addVal, addVal)
+
+def diamondStep(grid, size, side, addVal):
+	''' Find the center points of the squares and generate value.'''
+	half = side // 2
+	for r in range(0, size, half):
+		for c in range((r + half)%side, size, side):
+			# Handle Wrap around cases for Y axis
+			if r == 0:						# Handle Top value.
+				t = grid[(size-1)-half,c]
+			else:
+				t = grid[r-half,c] 	
+
+			if r == size-1:					# Handle Bottom value.
+				b = grid[0+half, c] 	
+			else:	
+				b = grid[(r+half)%size,c] 	
+
+			# Handle Wrap around cases for X axis.
+			if c == 0:						# Handle Left value.	
+				l = grid[r,(size-1)-half]
+			else:
+				l = grid[r,c-half]	
+			if c == size-1:					# Handle Right value.
+				ri = grid[r,0+half]	
+			else:	
+				ri = grid[r,(c+half)%size]	
+
+			avg = ((t + l + b + ri) / 4)	
+			# Set current diamond point to grid
+			grid[r,c] = avg + random.uniform(-addVal, addVal)
+
+	return grid
+
+
+def medianFilter(grid, size, filterSize):
+	''' Can be used to eliminate additional noise from image if needed.'''
+	
+	# Make copy of grid to avoid in-place errors.
+	filterImg = np.array(grid, dtype=np.float32)
+	# Array will hold values where the median lies.
+	medArry = []
+	# Center-point of nxn filter
+	filtMid = filterSize // 2
+	# Leave the edges as the same
+	for y in range(1, size-1):
+		for x in range(1, size-1):
+			# Collect values within filter to generate median
+			for m in range(filterSize):
+				for n in range(filterSize):
+					# If out of boundaries for the map wrap around to the other side memory errors.
+					fX = ((x-filtMid) + n) % size
+					fY = ((y-filtMid) + m) % size
+					medArry.append(filterImg[fY][fX])
+			# Sort and return median value and clear median Array.
+			medArry.sort()
+			#print(medArry)
+			grid[y][x] = medArry[(filterSize*filterSize)//2]
+			medArry.clear()
+	return grid
