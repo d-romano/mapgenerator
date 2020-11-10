@@ -53,8 +53,8 @@ depracated.
 * Clone from github using: `git clone https://github.com/d-romano/mapgenerator`
 * Move to new clone directory
 * Setup vitrual environment: 
-	1.) Create using: `venv -m venv`
- 	2.) Activate with: `source ./venv/bin/activate`
+	* Create using: `venv -m venv`
+ 	* Activate with: `source ./venv/bin/activate`
 * Install requirements using: `pip install -r requirements.txt`
 
 ## How to use:
