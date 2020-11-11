@@ -5,7 +5,7 @@
 import numpy as np
 import math
 
-def PerlinNoise(shape:(int,int), scale:int = 1, f:int = 4, randPerm: bool = False):
+def PerlinNoise(shape:(int,int), scale:int = 1, f:int = 10, l:float = 2.0, a:float = 10.0, p:float = .5, o:int = 4, randPerm: bool = False):
 	''' 
 		Creates a heightmap of the requestion shape. Permutation table used in generation
 		will either be Perlin's original table or a randomly generated one based on user request.
@@ -13,13 +13,13 @@ def PerlinNoise(shape:(int,int), scale:int = 1, f:int = 4, randPerm: bool = Fals
 		pixel in the height map. Scale determines how zoomed in or out the generated map appears.
 	'''
 	w,h = shape
-	p = getPermTable(randPerm)
+	perm = getPermTable(randPerm)
 	grid = np.zeros(shape)
 	
-
+	# Create noise value for each point given scale and F.L.A.P.O (Hehe, flapo).
 	for y in range(h):
 		for x in range(w):
-			grid[y][x] = _noise((x/ w/scale), (y/ h/scale), f, l, a, p,)
+			grid[y][x] = _noise((x/ w/scale), (y/ h/scale), f, l, a, p, o, perm)
 	return grid
 
 
@@ -78,7 +78,7 @@ def grad(perm, x, y):
 	else: 0
 
 
-def _noise(x, y, f = 10, l, a, p, o):
+def _noise(x, y, f, l, a, p, o, perm):
 	""" 
 		Information on frequency, lancularity, persistence, amplitude and affects on perlin noise from:
 			-http://libnoise.sourceforge.net/glossary/#:~:text=also%3A%20Lacunarity%2C%20Persistence-,Persistence,produces%20%22rougher%22%20Perlin%20noise.
@@ -88,17 +88,17 @@ def _noise(x, y, f = 10, l, a, p, o):
 	val = 0
 	# Lower = more detail (zoomed in), lower = less detail(zoomed out).
 	freq = f
-	# Scale factor for each pass
-	lancularity = .1
-	# Max Height of each wave, works best in higher vals
-	amp = 30
+	# Scale factor for each pass (Helps with smoothing)
+	lancularity = l
+	# Max Height of each wave, works best in higher vals (Roughness of terrain)
+	amp = a
 	# Lower = Simple (.5 appears to be sweetspot for maps similar to Diamond-Square)
-	persistence = .50
+	persistence = p
 	# Increase detail at cost of speed.
-	octave = 8
+	octave = o
 
 	for i in range(octave):
-		val += noise(x*freq, y*freq, p) * amp
+		val += noise(x*freq, y*freq, perm) * amp
 		# Frequency increases x2 for each octave.
 		freq *= lancularity
 		amp *= persistence
