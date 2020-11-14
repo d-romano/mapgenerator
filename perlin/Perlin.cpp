@@ -17,7 +17,7 @@ double grad(int, double, double);
 
 // Readable through .so via python.
 extern "C"{
-	double* perlinNoise(int size, double scale, double f, double l, double a, double p, int o, uint8_t *perms, double* grid)
+	void perlinNoise(int size, double scale, double f, double l, double a, double p, int o, uint8_t *perms, double* grid)
 	{
 			// Width and height
 			int w = size;
@@ -31,8 +31,6 @@ extern "C"{
 					grid[(y*w) + x] = perlinHelper((double)x/w/(double)scale, (double)y/h/(double)scale, f, l, a, p ,o, perms);
 				}
 			}
-
-			return grid;
 	}
 }
 

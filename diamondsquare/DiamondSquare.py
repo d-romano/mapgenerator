@@ -1,7 +1,8 @@
 import random
 import numpy as np 
-
-
+from numpy.ctypeslib import ndpointer
+import ctypes
+import pathlib
 
 def DiamondSquare(scale:int, rough:float = 1.0, seed:int = None,  redNoise: bool = False):
 	"""
@@ -23,6 +24,8 @@ def DiamondSquare(scale:int, rough:float = 1.0, seed:int = None,  redNoise: bool
 	with the median of all its pixels in the area of filterSize x filterSize.
 
 	"""
+	'''
+	# Old python driver code
 	size = 2**scale + 1
 
 	# If seed entered then add to random, else clear seed 
@@ -41,6 +44,29 @@ def DiamondSquare(scale:int, rough:float = 1.0, seed:int = None,  redNoise: bool
 	return grid
 
 
+	'''
+	# Opens shared c++ library.
+	libname = pathlib.Path().absolute() / "diamondsquare/diamond.so"
+	c_lib = ctypes.CDLL(libname)
+
+	# Cast arg and return types to c-type values.
+	c_lib.diamondSquare.argtypes = [ctypes.c_int, ctypes.c_double,
+									ndpointer(ctypes.c_double), ctypes.c_int]
+	c_lib.diamondSquare.restype = None
+
+	# Create size from scale
+	size = (2**scale) + 1
+	grid = np.empty((size,size))
+
+	if not seed: seed = 0
+
+	c_lib.diamondSquare(ctypes.c_int(size), ctypes.c_double(rough), grid, ctypes.c_int(seed))
+
+	print("Returning grid!")
+	return grid
+
+
+# Code below no longer needed.
 def fillGrid(size, rough):
 	grid = np.zeros((size, size), dtype=np.float32)
 
