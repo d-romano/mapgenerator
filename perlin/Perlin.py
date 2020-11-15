@@ -8,6 +8,7 @@ import math
 
 import ctypes
 import pathlib
+import glob
 
 def PerlinNoise(shape:(int,int), scale:float = 1, f:float = 10, l:float = 2.0, a:float = 10.0, p:float = .5, o:int = 4, randPerm: bool = False, seed = None):
 	''' 
@@ -18,7 +19,7 @@ def PerlinNoise(shape:(int,int), scale:float = 1, f:float = 10, l:float = 2.0, a
 	'''
 	h,w = shape
 	# Get name
-	libname = pathlib.Path().absolute() / "perlin/perlin.so"
+	libname = libname = glob.glob(f"{pathlib.Path().absolute()}/build/*/dr_mapgen/perlin*.so")[0]
 	c_lib = ctypes.CDLL(libname)
 
 	c_lib.perlinNoise.argtypes = [ctypes.c_int, ctypes.c_double,
@@ -39,14 +40,8 @@ def PerlinNoise(shape:(int,int), scale:float = 1, f:float = 10, l:float = 2.0, a
 	return grid
 	
 
-def getPermTable(randPerm):
+def getPermTable(randPerm, seed):
 	# Generate random permutation or use Ken Perlin's perm table.
-	'''
-	if randPerm:
-		# Doesn't allow selection of data types making it useless when using c :(
-		p = np.random.choice(256, 256, replace=False)
-	else:
-	'''
 	'''
 		Obtained from Ken Perlin's Documentation. Instead of copying the array again
 		to fill with 512 values  I will use mod 256 when needed.
@@ -70,99 +65,3 @@ def getPermTable(randPerm):
 	if randPerm: np.random.shuffle(p)
 
 	return p
-
-
-# Code ported to c for speed.
-def fade(t):
-	'''
-		Allows for smoother transition between values.
-	'''
-	return  t * t * t * (t * (t * 6 - 15) + 10) 
-
-
-def lerp(t, a, b):
-	''' 
-		Perform linear interpolation between A and B.
-	'''	
-	return a + t * (b - a)
-
-
-def grad(perm, x, y):
-	# Get one of the 4 possible gradient vectors
-	gradDir = perm & 3
-	if gradDir == 0:
-		return x + y
-	elif gradDir  == 1:
-		return -x + y
-	elif gradDir == 2:
-		return x - y
-	elif gradDir == 3:
-		return -x - y
-	else: 0
-
-
-def _noise(x, y, f, l, a, p, o, perm):
-	""" 
-		Information on frequency, lancularity, persistence, amplitude and affects on perlin noise from:
-			-http://libnoise.sourceforge.net/glossary/#:~:text=also%3A%20Lacunarity%2C%20Persistence-,Persistence,produces%20%22rougher%22%20Perlin%20noise.
-			-https://stackoverflow.com/questions/22380113/perlin-noise-input-values
-	"""
-	# Sum value of noise for each octave
-	val = 0
-	# Lower = more detail (zoomed in), lower = less detail(zoomed out).
-	freq = f
-	# Scale factor for each pass (Helps with smoothing)
-	lancularity = l
-	# Max Height of each wave, works best in higher vals (Roughness of terrain)
-	amp = a
-	# Lower = Simple (.5 appears to be sweetspot for maps similar to Diamond-Square)
-	persistence = p
-	# Increase detail at cost of speed.
-	octave = o
-
-	for i in range(octave):
-		val += noise(x*freq, y*freq, perm) * amp
-		# Frequency increases x2 for each octave.
-		freq *= lancularity
-		amp *= persistence
-	
-	return val / octave
-
-
-def noise(x, y, p):
-	'''
-		Get the noise value of the x and y coordinate or our matrix.
-	'''
-	#Get corner coordinates of chunk from our array of 256 permutations
-	cX = int(math.floor(x)) & 255
-	cY = int(math.floor(y)) & 255
-
-	# Get pixel coordinates inside of chunk
-	pX = x - math.floor(x)
-	pY = y - math.floor(y)
-
-	'''
-		Get the gradient for the 4 corners of the main shape.
-		Get the distance of the 4 corners from the current pixel
-		Get the dot product of each corner gradient and its distance vector
-		perform  bilinear interpolation.
-		Product of that interpolation is the noise value of the pixel.
-	'''
-	g1 = p[(p[cX] + cY) % 256]		# Top Left Corner
-	g2 = p[(p[(cX+1)%256] + cY) % 256]		# Top-Right Corner
-	g3 = p[(p[cX] + cY + 1) % 256]		# Bottom Left Corner
-	g4 = p[(p[(cX+1)%256] + cY +1) % 256]	# Bottom Right Corner
-
-
-	# Get distances
-	d1 = grad(g1, pX, pY)
-	d2 = grad(g2, pX - 1, pY)
-	d3 = grad(g3, pX, pY - 1)
-	d4 = grad(g4, pX - 1, pY - 1)
-
-	u = fade(pX)
-
-	v = fade(pY)
-
-	
-	return lerp(v, lerp(u, d1, d2), lerp(u, d3,d4))

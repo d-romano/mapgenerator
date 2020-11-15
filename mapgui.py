@@ -5,7 +5,7 @@ from PIL import ImageTk, Image
 
 from diamondsquare import DiamondSquare as ds
 from perlin import Perlin as pn
-import WriteImage
+from writeimage import WriteImage
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
