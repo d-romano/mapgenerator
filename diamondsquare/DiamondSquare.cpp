@@ -13,11 +13,13 @@ void squareStep(int, int, double, double*);
 double getRandFloat(double);
 void medianFilter(double *, int );
 
-extern "C" void diamondSquare(int size, double rough, double* grid, int seed)
+extern "C" void diamondSquare(int size, double rough, double* grid, int seed, bool redNoise)
 {
 	// Seed random with time or provided seed.
-	if (seed != 0)
+	if (seed != 0){
+		srand(time(NULL));
 		srand(seed);
+	}
 	else
 		srand(time(NULL));
 
@@ -38,8 +40,8 @@ extern "C" void diamondSquare(int size, double rough, double* grid, int seed)
 		side = side / 2;
 	}
 
-	// Apply median filter to smooth additional noise
-	medianFilter(grid, size);
+	if (redNoise)
+		medianFilter(grid, size);
 }
 
 
@@ -104,7 +106,7 @@ void medianFilter(double *grid, int size){
 
 	int fX, fY;
 
-	double medArry[9];
+	double medArry[9] = {0,0,0,0,0,0,0,0,0};
 
 	 for (int r = 1; r < size-1; r++){
 	 	for (int c = 1; c < size-1; c++){

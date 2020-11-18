@@ -26,20 +26,20 @@ def DiamondSquare(scale:int, rough:float = 1.0, seed:int = None,  redNoise: bool
 
 	"""
 	# Opens shared c++ library.
-	libname = glob.glob(f"{pathlib.Path().absolute()}/build/*/dr_mapgen/diamond*.so")[0]
+	libname = glob.glob(f"{pathlib.Path().absolute()}/build/*/dr_mapgen/diamondsquare/*.so")[0]
 	c_lib = ctypes.CDLL(libname)
 
 	# Cast arg and return types to c-type values.
 	c_lib.diamondSquare.argtypes = [ctypes.c_int, ctypes.c_double,
-									ndpointer(ctypes.c_double), ctypes.c_int]
+									ndpointer(ctypes.c_double), ctypes.c_int, ctypes.c_bool]
 	c_lib.diamondSquare.restype = None
 
 	# Create size from scale
 	size = (2**scale) + 1
-	grid = np.empty((size,size))
+	grid = np.zeros((size,size))
 
 	if not seed: seed = 0
 
-	c_lib.diamondSquare(ctypes.c_int(size), ctypes.c_double(rough), grid, ctypes.c_int(seed))
+	c_lib.diamondSquare(ctypes.c_int(size), ctypes.c_double(rough), grid, ctypes.c_int(seed), ctypes.c_bool(redNoise))
 
 	return grid

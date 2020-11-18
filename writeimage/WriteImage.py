@@ -5,54 +5,6 @@ import datetime
 import math
 import os
 
-# Deprecated function. Remove at later date.
-def writePPM(w, h, heightData):
-	'''
-		PPM format:
-
-		header: 
-			MagicNum(P3/P6) W  H maxColorVal \n
-
-			[H][W] raster of RGB triplets
-
-		example:
-
-		P3 4 4 15
-
-		000 000 000 000
-		000 000 000 000
-		000 000 000 000
-		000 000 000 000
-
-
-		This creates a 4x4 Image of white pixels.
-	'''
-	# Create .ppm header using passed information
-	header = "P6 {} {} 255\n".format(w, h)
-
-	# Array consisting of 8-bit each triplet is one 24-bit color pixel
-	img = np.array([0,0,0]*w*h, dtype=np.int8)
-
-	# Move through entire array, generating terrain color for pixel value and placing in image.
-	for row in range(h):
-		for col in range(w):
-			ind = 3 * (row*w + col) 
-			r,g,b = floatToRGB(heightData[row][col])
-			# Replace with side values for grey-scale.
-			img[ind] =  r 		#(r*.299) + (g*.587) + (b * .114)
-			img[ind+1] = g      #(r*.299) + (g*.587) + (b * .114)
-			img[ind + 2] = b 	#(r*.299) + (g*.587) + (b * .114)
-
-	# Make directory for saved maps if one doesn't exist.
-	if not os.path.exists('my_maps'):
-		os.makedirs('my_maps')
-
-	# Open file with name based on current time/date
-	with open('./my_maps/map%s.ppm' % datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S"), 'wb') as f:
-		f.write(bytearray(header,'ascii'))
-		img.tofile(f)
-
-
 def writeImg(w, h, heightData, fType='png'):
 	img = np.zeros([h,w,3], dtype=np.int8)
 	for row in range(h):
@@ -69,7 +21,12 @@ def writeImg(w, h, heightData, fType='png'):
 
 	pil_im  = Image.fromarray(img, 'RGB')
 	
-	pil_im.save("./my_maps/map_{}.{}".format(datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S"), fType))
+	imgPath = "./my_maps/map_{}.{}".format(datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S"), fType)
+
+
+	pil_im.save(imgPath)
+
+	return imgPath
 
 
 def rgbToHex(rgb):

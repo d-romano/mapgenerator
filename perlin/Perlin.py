@@ -10,16 +10,18 @@ import ctypes
 import pathlib
 import glob
 
-def PerlinNoise(shape:(int,int), scale:float = 1, f:float = 10, l:float = 2.0, a:float = 10.0, p:float = .5, o:int = 4, randPerm: bool = False, seed = None):
+def PerlinNoise(shape:int, scale:float = 1, f:float = 10, l:float = 2.0, a:float = 10.0, p:float = .5, o:int = 4, randPerm: bool = False, seed:int = None):
 	''' 
 		Creates a heightmap of the requestion shape. Permutation table used in generation
 		will either be Perlin's original table or a randomly generated one based on user request.
 		Noise is generated using the current position, scale and octave (f) for each
 		pixel in the height map. Scale determines how zoomed in or out the generated map appears.
 	'''
-	h,w = shape
+	
 	# Get name
-	libname = libname = glob.glob(f"{pathlib.Path().absolute()}/build/*/dr_mapgen/perlin*.so")[0]
+	libname = glob.glob(f"{pathlib.Path().absolute()}/build/*/dr_mapgen/perlin/*.so")[0]
+
+
 	c_lib = ctypes.CDLL(libname)
 
 	c_lib.perlinNoise.argtypes = [ctypes.c_int, ctypes.c_double,
@@ -29,10 +31,11 @@ def PerlinNoise(shape:(int,int), scale:float = 1, f:float = 10, l:float = 2.0, a
 	
 	c_lib.perlinNoise.restype = None
 	
+	size = (2**shape) + 1
 	perm = getPermTable(randPerm, seed)
-	grid = np.empty((h,w))
-
-	c_lib.perlinNoise(ctypes.c_int(h), ctypes.c_double(scale), 
+	grid = np.zeros((size,size))
+	
+	c_lib.perlinNoise(ctypes.c_int(size), ctypes.c_double(scale), 
 							ctypes.c_double(f), ctypes.c_double(l),
 							ctypes.c_double(a), ctypes.c_double(p),
 							ctypes.c_int(o), perm, grid)
@@ -61,7 +64,9 @@ def getPermTable(randPerm, seed):
 	138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180], dtype=ctypes.c_int8)
 
 	# Add seed if given or clear seed.
-	np.random.seed(seed) if seed else np.random.seed()
-	if randPerm: np.random.shuffle(p)
+	
+	if randPerm: 
+		np.random.seed(int(seed)) if seed else np.random.seed()
+		np.random.shuffle(p)
 
 	return p
