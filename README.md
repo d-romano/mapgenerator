@@ -1,5 +1,5 @@
 # Map Generator
-A GUI based applicaiton that will utilize the Diamond Square algorithm
+A GUI based application that will utilize the Diamond Square algorithm
 to create a terrain map.
 
 The aim of this project is to build an application that can be used 
@@ -16,7 +16,7 @@ Planned features are:
 
 Possible features:
 * City/ Town generation.
-* Landmark generation (Caves, monuments, etc).
+* Landmark generation (Caves, monuments, .etc).
 * Allow uploading of a previously generated map for expansion.
 * Additional generation algorithms (Perlin noise/ simplex noise)
 
@@ -44,21 +44,21 @@ for their generated map. Once the image is generated it should display on the sc
 an opportunity to save it or generate a new map.
 
 ### 3.) Image Generation
-Calulates color for each pixel in the heightmap based on the current dictionary. Utilizes PIL and Numpy to create
+Calculates color for each pixel in the heightmap based on the current dictionary. Utilizes PIL and Numpy to create
 a 3-D pixel raster that can be saved to specified file format. Previously was using .PPM format but has since been
-depracated.
+deprecated.
 
 
 ## Installation Process
 * Clone from github using: `git clone https://github.com/d-romano/mapgenerator`
 * Move to new clone directory
-* Setup vitrual environment: 
+* Setup virtual environment: 
 	* Create using: `venv -m venv`
  	* Activate with: `source ./venv/bin/activate`
 * Install requirements using: `pip install -r requirements.txt`
 
 ## How to use:
-At the momement the modules must all be imported separately to be used. An example of a use case is:
+At the moment the modules must all be imported separately to be used. An example of a use case is:
 ```python
 
 from diamondsquare import DiamondSquare as ds
@@ -74,7 +74,7 @@ WriteImage.writeImg(size, size, pgrid, fType='jpg')
 ```
 
 ## Dev process
-This application was buit on TKinter, NumPy, PIL and Python 3.7
+This application was built on TKinter, NumPy, PIL and Python 3.7
 
 ## Use Cases:
 To create a map to make table-top game session more immersive.
